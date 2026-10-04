@@ -21,13 +21,13 @@ controller (Xbox-style, or anything that emulates one).
 .\install.ps1
 ```
 
-**Linux / Steam Deck** (not yet tested on a Deck):
+**Linux / Steam Deck**:
 
 ```bash
 bash install.sh
 ```
 
-Then set the game's controller layout in Steam to the **Gamepad** template.
+Then set the game's controller layout in Steam to the standard **Gamepad** template.
 
 To remove it again, run `.\install.ps1 -Uninstall` or `bash install.sh --uninstall`.
 
