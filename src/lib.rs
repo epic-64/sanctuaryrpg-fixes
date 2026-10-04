@@ -46,6 +46,7 @@ pub mod win {
 const SDL_KEYDOWN: u8 = 2;
 const SDL_APPINPUTFOCUS: u8 = 0x02;
 const KMOD_LSHIFT: i32 = 0x0001;
+const SDLK_RETURN: i32 = 13;
 const SDLK_ESCAPE: i32 = 27;
 const SDLK_SPACE: i32 = 32;
 const SDLK_UP: i32 = 273;
@@ -315,7 +316,7 @@ impl State {
     }
 
     /// Lets the keyboard drive the game the way the controller does: the arrow keys move
-    /// the menu highlight, Space is the A button and Escape the B button.
+    /// the menu highlight, Space and Enter are the A button and Escape the B button.
     /// Returns true if the key was used up and must not reach the game.
     fn key(&mut self, key: Key) -> bool {
         let (name, button) = match key.sym {
@@ -323,7 +324,7 @@ impl State {
             SDLK_DOWN => ("down", pad::DOWN),
             SDLK_RIGHT => ("right", pad::RIGHT),
             SDLK_LEFT => ("left", pad::LEFT),
-            SDLK_SPACE => ("a", pad::A),
+            SDLK_SPACE | SDLK_RETURN => ("a", pad::A),
             SDLK_ESCAPE => ("b", pad::B),
             _ => return false,
         };
@@ -335,7 +336,12 @@ impl State {
         // in the middle of typed text; otherwise it is A, which advances cutscenes.
         // Escape has no meaning of its own: the game only takes it for a stray glyph.
         let typing = self.menu.prompt().is_some_and(|typed| !typed.is_empty());
-        let used = self.menu.is_active() || button == pad::B || (button == pad::A && !typing);
+        let used = if key.sym == SDLK_RETURN {
+            // Enter is still what finishes a choice typed by hand.
+            self.menu.is_active() && !typing
+        } else {
+            self.menu.is_active() || button == pad::B || (button == pad::A && !typing)
+        };
         if used {
             redraw |= self.press(name, button);
         }

@@ -52,13 +52,15 @@ On screens that list choices such as `[1] Play`, `[22] Load Holon`, `<S> Save Ga
 | Controller            | Keyboard   | Action                                                         |
 | --------------------- | ---------- | -------------------------------------------------------------- |
 | D-pad / left stick    | Arrow keys | Up/down moves between rows, left/right within a row (both wrap) |
-| A                     | Space      | Pick the highlighted choice                                    |
+| A                     | Space / Enter | Pick the highlighted choice                                    |
 | B                     | Escape     | Pick Back / Return / Cancel / Leave / Close / No, if offered; otherwise Backspace |
 
 The keyboard works the same way in the game's window and in [terminal mode](#terminal-mode).
 On screens without choices the arrow keys are passed to the game unchanged. Space and
 Escape act as the A and B buttons everywhere (so Space advances cutscenes like Enter),
 except that Space types a space when text has already been typed at the `>` prompt.
+Enter picks the highlighted choice too, unless a choice has been typed at the prompt by
+hand: then it confirms that one, as it always did.
 
 On every other screen, and for all other buttons, the bindings from
 `sanctuary-pad.ini` apply. The defaults are:
