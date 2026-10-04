@@ -227,6 +227,11 @@ fn parse(rows: &[String]) -> Vec<MenuOption> {
             let label = label_of(&row[close + 1..]);
             // A bracket glued to the previous one, as in `[ON][40]`, is a read-out.
             let standalone = open == 0 || row.as_bytes()[open - 1] != b']';
+            // So is one glued to the next: `[O][::::    ]` is an enemy's distance and
+            // health bar.
+            if row.as_bytes().get(close + 1) == Some(&b'[') {
+                continue;
+            }
             let Some(keys) = token_keys(token, label.trim_start(), square, standalone) else {
                 continue;
             };
@@ -503,6 +508,17 @@ mod tests {
         menu.update(&rows(&[" Press any key to continue..."]));
         menu.update(&rows(&[" [1] Play", " [2] Settings", " [3] Trials"]));
         assert_eq!(typed(&menu.selected_keys().unwrap()), "1");
+    }
+
+    #[test]
+    fn ignores_distance_indicator() {
+        let menu = menu(&[
+            "> You have HIT Murv for 375 damage.",
+            "  HP: 0 / 1394   ATK: 19 - 28  [SHOCK]",
+            " [O][                    ] [?] <VAMPIRIC>",
+            "> Murv has been OBLITERATED!",
+        ]);
+        assert!(!menu.is_active());
     }
 
     #[test]

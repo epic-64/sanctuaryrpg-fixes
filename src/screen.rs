@@ -14,6 +14,7 @@ struct Tcod {
     get_char: unsafe extern "C" fn(*mut c_void, c_int, c_int) -> c_int,
     // The `_wrapper` variants take colours as 0xBBGGRR integers instead of structs.
     get_background: unsafe extern "C" fn(*mut c_void, c_int, c_int) -> u32,
+    get_foreground: unsafe extern "C" fn(*mut c_void, c_int, c_int) -> u32,
     set_background: unsafe extern "C" fn(*mut c_void, c_int, c_int, u32, c_int),
     flush: unsafe extern "C" fn(),
 }
@@ -34,6 +35,7 @@ fn tcod() -> Option<&'static Tcod> {
             get_height: std::mem::transmute(find(c"TCOD_console_get_height")?),
             get_char: std::mem::transmute(find(c"TCOD_console_get_char")?),
             get_background: std::mem::transmute(find(c"TCOD_console_get_char_background_wrapper")?),
+            get_foreground: std::mem::transmute(find(c"TCOD_console_get_char_foreground_wrapper")?),
             set_background: std::mem::transmute(find(c"TCOD_console_set_char_background_wrapper")?),
             flush: std::mem::transmute(find(c"TCOD_console_flush")?),
         })
@@ -67,6 +69,22 @@ pub fn read() -> Vec<String> {
             })
             .collect()
     }
+}
+
+/// Width and height of the root console in cells.
+pub fn size() -> (i32, i32) {
+    tcod().map_or((0, 0), |tcod| unsafe { ((tcod.get_width)(ROOT), (tcod.get_height)(ROOT)) })
+}
+
+/// The character code of a cell with its foreground and background as 0xBBGGRR.
+pub fn cell(x: i32, y: i32) -> (i32, u32, u32) {
+    tcod().map_or((0, 0, 0), |tcod| unsafe {
+        (
+            (tcod.get_char)(ROOT, x, y),
+            (tcod.get_foreground)(ROOT, x, y) & 0xff_ffff,
+            (tcod.get_background)(ROOT, x, y) & 0xff_ffff,
+        )
+    })
 }
 
 pub fn background(x: i32, y: i32) -> u32 {

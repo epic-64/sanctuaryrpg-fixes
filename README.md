@@ -4,12 +4,14 @@ Controller support for **SanctuaryRPG: Black Edition**, which has none of its ow
 
 It is a replacement `SDL.dll` that passes everything through to the game's real SDL and
 turns XInput controller input into the key presses the game expects. It also reads the
-text on screen, so menus can be navigated with a highlight instead of memorising keys.
+text on screen, so menus can be navigated with a highlight instead of memorising keys,
+on the controller or with the arrow keys. And it can run the game inside a terminal
+instead of its own window, see [Terminal mode](#terminal-mode).
 
 ## Install
 
-Clone this repository and close the game. You need an XInput controller (Xbox-style, or
-anything that emulates one).
+Clone this repository and close the game. For controller support you need an XInput
+controller (Xbox-style, or anything that emulates one).
 
 **Windows**:
 
@@ -47,11 +49,16 @@ If something does not work, see [Troubleshooting](#troubleshooting) and
 
 On screens that list choices such as `[1] Play`, `[22] Load Holon`, `<S> Save Game` or `>2< EX Whirlwind`:
 
-| Input                 | Action                                                         |
-| --------------------- | -------------------------------------------------------------- |
-| D-pad / left stick    | Up/down moves between rows, left/right within a row (both wrap) |
-| A                     | Pick the highlighted choice                                    |
-| B                     | Pick Back / Return / Cancel / Leave / Close / No, if offered; otherwise Backspace |
+| Controller            | Keyboard   | Action                                                         |
+| --------------------- | ---------- | -------------------------------------------------------------- |
+| D-pad / left stick    | Arrow keys | Up/down moves between rows, left/right within a row (both wrap) |
+| A                     | Space      | Pick the highlighted choice                                    |
+| B                     | Escape     | Pick Back / Return / Cancel / Leave / Close / No, if offered; otherwise Backspace |
+
+The keyboard works the same way in the game's window and in [terminal mode](#terminal-mode).
+On screens without choices the arrow keys are passed to the game unchanged. Space and
+Escape act as the A and B buttons everywhere (so Space advances cutscenes like Enter),
+except that Space types a space when text has already been typed at the `>` prompt.
 
 On every other screen, and for all other buttons, the bindings from
 `sanctuary-pad.ini` apply. The defaults are:
@@ -68,6 +75,25 @@ On every other screen, and for all other buttons, the bindings from
 The controller is ignored while the game window is not focused. Typing text, such as a
 character name, still needs the keyboard.
 
+## Terminal mode
+
+The game can also be played inside a terminal, such as Windows Terminal. Run
+`sanctuary-terminal.cmd` from the game folder in the console you want it in:
+
+```powershell
+& "C:\Program Files (x86)\Steam\steamapps\common\SanctuaryRPG - Black Edition\sanctuary-terminal.cmd"
+```
+
+The game then opens no window of its own. Its screen is drawn into the console with
+[ratatui](https://ratatui.rs), in your terminal's font and with the same colours, and
+the console gets its prompt back when the game exits. The keyboard and the controller
+work as usual. Started any other way (Steam, a shortcut, the `.exe` itself) the game
+uses its normal window.
+
+The console has to be at least as large as the game's screen; if it is not, a message
+says how large it has to be. Where the game's background is black, the terminal's own
+background shows instead. This is Windows only for now.
+
 ## Configuration
 
 Edit `sanctuary-pad.ini` in the game folder and restart the game.
@@ -75,7 +101,7 @@ Edit `sanctuary-pad.ini` in the game folder and restart the game.
 ```ini
 x = 1                    # <button> = <key>
 ls = none                # unbind a button
-menu_navigation = true   # set to false for plain button-to-key bindings only
+menu_navigation = true   # set to false for plain button-to-key bindings only (and no keyboard navigation)
 dump_screen = false      # debug logging, see Troubleshooting
 ```
 
@@ -100,13 +126,14 @@ dump_screen = false      # debug logging, see Troubleshooting
 
 ### What the install scripts do
 
-Both scripts make the same three changes in the game folder:
+Both scripts make these changes in the game folder:
 
 | File                | What happens                                                |
 | ------------------- | ----------------------------------------------------------- |
 | `SDL_orig.dll`      | The game's original `SDL.dll`, renamed (first install only) |
 | `SDL.dll`           | Replaced with the proxy from this project                   |
 | `sanctuary-pad.ini` | Default bindings, copied only if the file is not there yet  |
+| `sanctuary-terminal.cmd` | Launcher for [terminal mode](#terminal-mode) (`install.ps1` only) |
 
 Neither script builds anything: they install the prebuilt `dist/sanctuary_pad.dll` that
 is checked into the repository. To build it yourself, see [Development](#development).
@@ -138,6 +165,7 @@ powershell -ExecutionPolicy Bypass -File .\install.ps1
 1. In the game folder, rename `SDL.dll` to `SDL_orig.dll`.
 2. Copy `dist/sanctuary_pad.dll` into the game folder as `SDL.dll`.
 3. Copy `sanctuary-pad.ini` into the game folder.
+4. For [terminal mode](#terminal-mode), copy `sanctuary-terminal.cmd` into the game folder.
 
 ### Linux / Steam Deck details
 
@@ -189,5 +217,6 @@ Source layout:
 | `src/pad.rs`    | XInput polling                                                    |
 | `src/menu.rs`   | Finding on-screen choices, selection and highlight                |
 | `src/screen.rs` | Reading and colouring the game's console through libtcod          |
+| `src/terminal.rs` | Terminal mode: draws the console with ratatui and reads its keys |
 | `src/hook.rs`   | Import-table patch used to draw the highlight before each frame   |
 | `src/config.rs` | `sanctuary-pad.ini` parsing                                       |

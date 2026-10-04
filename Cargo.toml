@@ -10,3 +10,6 @@ crate-type = ["cdylib"]
 [profile.release]
 opt-level = "s"
 panic = "abort"
+
+[dependencies]
+ratatui = { version = "0.30.2", default-features = false, features = ["crossterm"] }

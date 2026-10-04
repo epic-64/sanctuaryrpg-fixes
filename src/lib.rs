@@ -15,12 +15,14 @@ mod hook;
 mod menu;
 mod pad;
 mod screen;
+mod terminal;
 
 use config::{Config, Key};
 use menu::{Direction, Menu};
 use pad::Pad;
+use terminal::Terminal;
 use std::collections::VecDeque;
-use std::ffi::{c_int, c_void};
+use std::ffi::{c_char, c_int, c_void};
 use std::fs::OpenOptions;
 use std::io::Write;
 use std::path::PathBuf;
@@ -36,6 +38,7 @@ pub mod win {
         pub fn LoadLibraryA(name: *const c_char) -> *mut c_void;
         pub fn GetProcAddress(module: *mut c_void, name: *const c_char) -> *mut c_void;
         pub fn GetModuleHandleA(name: *const c_char) -> *mut c_void;
+        pub fn AttachConsole(process: u32) -> i32;
         pub fn VirtualProtect(address: *mut c_void, size: usize, protection: u32, previous: *mut u32) -> i32;
     }
 }
@@ -43,6 +46,12 @@ pub mod win {
 const SDL_KEYDOWN: u8 = 2;
 const SDL_APPINPUTFOCUS: u8 = 0x02;
 const KMOD_LSHIFT: i32 = 0x0001;
+const SDLK_ESCAPE: i32 = 27;
+const SDLK_SPACE: i32 = 32;
+const SDLK_UP: i32 = 273;
+const SDLK_DOWN: i32 = 274;
+const SDLK_RIGHT: i32 = 275;
+const SDLK_LEFT: i32 = 276;
 
 const BACKSPACE: Key = Key { sym: 8, unicode: 8, shift: false };
 const ENTER: Key = Key { sym: 13, unicode: 13, shift: false };
@@ -106,6 +115,7 @@ mod forwards {
     include!(concat!(env!("OUT_DIR"), "/forwards.rs"));
 }
 
+const DLL_PROCESS_DETACH: u32 = 0;
 const DLL_PROCESS_ATTACH: u32 = 1;
 
 /// Points every forwarding stub at the real SDL before anyone can call one.
@@ -119,6 +129,22 @@ pub unsafe extern "system" fn DllMain(_module: *mut c_void, reason: u32, _: *mut
         let table = &raw mut forwards::FORWARD_TABLE;
         for (i, name) in forwards::FORWARDED.iter().enumerate() {
             (*table)[i] = win::GetProcAddress(lib, name.as_ptr()) as usize;
+        }
+        if terminal_requested() {
+            // The game is shown in a console instead, so SDL must not open a window. This
+            // has to be in SDL's environment before the game initialises it.
+            let putenv = win::GetProcAddress(lib, c"SDL_putenv".as_ptr());
+            if !putenv.is_null() {
+                let putenv: unsafe extern "C" fn(*const c_char) -> c_int = std::mem::transmute(putenv);
+                putenv(c"SDL_VIDEODRIVER=dummy".as_ptr());
+            }
+        }
+    } else if reason == DLL_PROCESS_DETACH {
+        // The console outlives the game, so it has to be handed back the way it was.
+        if let Ok(mut guard) = STATE.try_lock() {
+            if let Some(terminal) = guard.as_mut().and_then(|state| state.terminal.take()) {
+                terminal.close();
+            }
         }
     }
     1
@@ -144,8 +170,16 @@ fn original() -> &'static Original {
     })
 }
 
+/// `sanctuary-terminal.cmd` sets this to have the game drawn in the console it was
+/// started from, instead of in a window.
+fn terminal_requested() -> bool {
+    std::env::var_os("SANCTUARY_PAD_TERMINAL").is_some()
+}
+
 struct State {
     config: Config,
+    /// The console that shows the game in terminal mode.
+    terminal: Option<Terminal>,
     pad: Pad,
     menu: Menu,
     held: u32,
@@ -173,7 +207,12 @@ static GAME_FLUSH: AtomicUsize = AtomicUsize::new(0);
 unsafe extern "C" fn flush_hook() {
     if let Ok(mut guard) = STATE.lock() {
         if let Some(state) = guard.as_mut() {
-            state.menu.sync();
+            if state.config.menu_navigation {
+                state.menu.sync();
+            }
+            if let Some(terminal) = &mut state.terminal {
+                terminal.draw();
+            }
         }
     }
     let flush: unsafe extern "C" fn() = std::mem::transmute(GAME_FLUSH.load(Ordering::Relaxed));
@@ -184,7 +223,7 @@ impl State {
     fn new() -> Self {
         let config = Config::load(&game_dir().join("sanctuary-pad.ini"));
         log(&format!("loaded, {} buttons bound", config.bindings.len()));
-        if config.menu_navigation {
+        if config.menu_navigation || terminal_requested() {
             let patched = unsafe {
                 hook::patch_import("libtcod-mingw.dll", c"_ZN11TCODConsole5flushEv", flush_hook as *const () as usize)
             };
@@ -193,9 +232,13 @@ impl State {
                 None => log("could not hook TCODConsole::flush; the menu highlight may flicker"),
             }
         }
+        let terminal = terminal_requested().then(Terminal::open).and_then(|opened| {
+            opened.map_err(|error| log(&format!("could not open the terminal: {error}"))).ok()
+        });
         let now = Instant::now();
         State {
             config,
+            terminal,
             pad: Pad::new(),
             menu: Menu::default(),
             held: 0,
@@ -221,8 +264,19 @@ impl State {
             self.dumper.tick(now);
         }
 
+        if let Some(terminal) = &mut self.terminal {
+            for key in terminal.keys() {
+                if !self.key(key) {
+                    self.queue.push_back((now, KeyEvent::new(key)));
+                }
+            }
+        }
+
         // XInput reports input even when the window is in the background.
-        let focused = unsafe { (original().get_app_state)() } & SDL_APPINPUTFOCUS != 0;
+        let focused = match &self.terminal {
+            Some(terminal) => terminal.focused(),
+            None => unsafe { (original().get_app_state)() & SDL_APPINPUTFOCUS != 0 },
+        };
         let buttons = self.pad.buttons(focused);
         let mut fired = buttons & !self.held;
         self.held = buttons;
@@ -249,8 +303,46 @@ impl State {
             }
         }
         if redraw {
-            screen::flush();
+            self.redraw();
         }
+    }
+
+    fn redraw(&mut self) {
+        screen::flush();
+        if let Some(terminal) = &mut self.terminal {
+            terminal.draw();
+        }
+    }
+
+    /// Lets the keyboard drive the game the way the controller does: the arrow keys move
+    /// the menu highlight, Space is the A button and Escape the B button.
+    /// Returns true if the key was used up and must not reach the game.
+    fn key(&mut self, key: Key) -> bool {
+        let (name, button) = match key.sym {
+            SDLK_UP => ("up", pad::UP),
+            SDLK_DOWN => ("down", pad::DOWN),
+            SDLK_RIGHT => ("right", pad::RIGHT),
+            SDLK_LEFT => ("left", pad::LEFT),
+            SDLK_SPACE => ("a", pad::A),
+            SDLK_ESCAPE => ("b", pad::B),
+            _ => return false,
+        };
+        if !self.config.menu_navigation {
+            return false;
+        }
+        let mut redraw = self.menu.sync();
+        // Without choices on screen the arrow keys keep their own meaning. So does Space
+        // in the middle of typed text; otherwise it is A, which advances cutscenes.
+        // Escape has no meaning of its own: the game only takes it for a stray glyph.
+        let typing = self.menu.prompt().is_some_and(|typed| !typed.is_empty());
+        let used = self.menu.is_active() || button == pad::B || (button == pad::A && !typing);
+        if used {
+            redraw |= self.press(name, button);
+        }
+        if redraw {
+            self.redraw();
+        }
+        used
     }
 
     /// Handles a button press (or auto-repeat). Returns true if the screen needs a redraw.
@@ -365,11 +457,27 @@ fn next_pad_event(waiting: bool) -> Option<KeyEvent> {
     state.queue.pop_front().map(|(_, event)| event)
 }
 
+/// Offers a key press from the game's own window to the menu navigation.
+/// Returns true if the event was used up.
+unsafe fn keyboard_event(event: *mut c_void) -> bool {
+    let event = event.cast::<KeyEvent>().read_unaligned();
+    if event.ty != SDL_KEYDOWN {
+        return false;
+    }
+    let Ok(mut guard) = STATE.lock() else { return false };
+    let key = Key { sym: event.keysym.sym, unicode: event.keysym.unicode, shift: false };
+    guard.get_or_insert_with(State::new).key(key)
+}
+
 unsafe fn poll_event(event: *mut c_void, waiting: bool) -> c_int {
-    let result = (original().poll_event)(event);
     // A null event only asks whether something is pending; leave that to SDL.
-    if result != 0 || event.is_null() {
-        return result;
+    if event.is_null() {
+        return (original().poll_event)(event);
+    }
+    while (original().poll_event)(event) != 0 {
+        if !keyboard_event(event) {
+            return 1;
+        }
     }
     match next_pad_event(waiting) {
         Some(key_event) => {

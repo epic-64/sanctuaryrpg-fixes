@@ -24,6 +24,7 @@ if ($Uninstall) {
     if (Test-Path $orig) {
         Remove-Item $sdl -Confirm:$false
         Rename-Item $orig "SDL.dll"
+        Remove-Item (Join-Path $GameDir "sanctuary-terminal.cmd") -ErrorAction SilentlyContinue
         Write-Host "Restored the original SDL.dll"
     } else {
         Write-Host "Nothing to uninstall"
@@ -58,4 +59,5 @@ $ini = Join-Path $GameDir "sanctuary-pad.ini"
 if (-not (Test-Path $ini)) {
     Copy-Item (Join-Path $PSScriptRoot "sanctuary-pad.ini") $ini
 }
+Copy-Item (Join-Path $PSScriptRoot "sanctuary-terminal.cmd") $GameDir -Force
 Write-Host "Installed to $GameDir"
