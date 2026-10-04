@@ -1,10 +1,19 @@
 # Builds the proxy and installs it into the game directory.
 # The original SDL.dll is kept as SDL_orig.dll; run with -Uninstall to put it back.
 param(
-    [string]$GameDir = "E:\SteamBlitz\steamapps\common\SanctuaryRPG - Black Edition",
+    # Defaults to wherever Steam has the game installed.
+    [string]$GameDir,
     [switch]$Uninstall
 )
 $ErrorActionPreference = "Stop"
+
+. (Join-Path $PSScriptRoot "game-dir.ps1")
+if (-not $GameDir) {
+    $GameDir = Find-GameDir
+}
+if (-not (Test-Path (Join-Path $GameDir "SanctuaryRPG.exe"))) {
+    throw "No SanctuaryRPG.exe in: $GameDir"
+}
 
 $sdl = Join-Path $GameDir "SDL.dll"
 $orig = Join-Path $GameDir "SDL_orig.dll"

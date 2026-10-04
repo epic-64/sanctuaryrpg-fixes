@@ -1,6 +1,8 @@
 # Debug helper: runs the game with scripted controller presses and prints the screens it saw.
 param([string]$Buttons = "a", [int]$Seconds = 15, [int]$Tail = 200, [string]$Screenshot,
-      [string]$GameDir = "E:\SteamBlitz\steamapps\common\SanctuaryRPG - Black Edition")
+      [string]$GameDir)
+. (Join-Path $PSScriptRoot "game-dir.ps1")
+if (-not $GameDir) { $GameDir = Find-GameDir }
 Get-Process SanctuaryRPG -ErrorAction SilentlyContinue | Stop-Process -Force
 Start-Sleep -Milliseconds 500
 powershell -NoProfile -ExecutionPolicy Bypass -File "$PSScriptRoot\install.ps1" -GameDir $GameDir | Select-Object -Last 1

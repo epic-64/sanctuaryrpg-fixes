@@ -6,115 +6,29 @@ It is a replacement `SDL.dll` that passes everything through to the game's real 
 turns XInput controller input into the key presses the game expects. It also reads the
 text on screen, so menus can be navigated with a highlight instead of memorising keys.
 
-## Requirements
-
-- Windows, with the Steam version of SanctuaryRPG: Black Edition
-- An XInput controller (Xbox-style, or anything that emulates one)
-- [Rust](https://rustup.rs) with the MSVC toolchain and the 32-bit target (the game is a
-  32-bit executable):
-
-  ```powershell
-  rustup target add i686-pc-windows-msvc
-  ```
-
 ## Install
 
-Close the game, then from this folder:
+Clone this repository and close the game. You need an XInput controller (Xbox-style, or
+anything that emulates one).
+
+**Windows** (needs [Rust](https://rustup.rs) and `rustup target add i686-pc-windows-msvc`):
 
 ```powershell
 .\install.ps1
 ```
 
-If the game is not in the default location, pass its folder:
+**Linux / Steam Deck** (nothing to build; not yet tested on a Deck):
 
-```powershell
-.\install.ps1 -GameDir "D:\Steam\steamapps\common\SanctuaryRPG - Black Edition"
+```bash
+bash install.sh
 ```
 
-If PowerShell refuses to run the script, use:
+Then set the game's controller layout in Steam to the **Gamepad** template.
 
-```powershell
-powershell -ExecutionPolicy Bypass -File .\install.ps1
-```
+To remove it again, run `.\install.ps1 -Uninstall` or `bash install.sh --uninstall`.
 
-The script builds the DLL and makes three changes in the game folder:
-
-| File                | What happens                                            |
-| ------------------- | ------------------------------------------------------- |
-| `SDL_orig.dll`      | The game's original `SDL.dll`, renamed (first install only) |
-| `SDL.dll`           | Replaced with the proxy built from this project         |
-| `sanctuary-pad.ini` | Default bindings, copied only if the file is not there yet |
-
-Start the game as usual, through Steam or directly.
-
-### Manual install
-
-1. `cargo build --release`
-2. In the game folder, rename `SDL.dll` to `SDL_orig.dll`.
-3. Copy `target\i686-pc-windows-msvc\release\sanctuary_pad.dll` into the game folder as `SDL.dll`.
-4. Copy `sanctuary-pad.ini` into the game folder.
-
-## Linux / Steam Deck (Proton)
-
-This setup has not been tested on a Deck. Nothing in the proxy is known to conflict with
-Proton, and the steps below are what it needs.
-
-The DLL cannot be built on Linux, so the repository carries a prebuilt copy in
-`dist/sanctuary_pad.dll`. On Windows, `install.ps1` refreshes it on every build; commit
-it whenever the code changes.
-
-1. Clone the repository.
-2. Close the game.
-3. In a terminal (Desktop Mode → Konsole on the Deck), from the cloned folder:
-
-   ```bash
-   bash install.sh
-   ```
-
-   The script finds the game in your Steam libraries, including ones on an SD card,
-   keeps the game's `SDL.dll` as `SDL_orig.dll`, installs the proxy as `SDL.dll` and
-   copies `sanctuary-pad.ini` if the game folder has none yet. If it cannot find the
-   game, pass the folder:
-
-   ```bash
-   bash install.sh --game-dir "/path/to/steamapps/common/SanctuaryRPG - Black Edition"
-   ```
-
-4. Set the controller layout to a gamepad. Steam tends to give games without controller
-   support a keyboard-and-mouse layout, and with that the proxy never sees a controller.
-   Open the game's controller settings and choose the **Gamepad** template.
-
-5. Start the game.
-
-To update, `git pull` and run `bash install.sh` again. To remove the proxy, run
-`bash install.sh --uninstall`.
-
-Notes:
-
-- Typing text, such as a character name, needs the on-screen keyboard (Steam + X).
-- A game update or verifying the game files restores the original `SDL.dll`. Run
-  `bash install.sh` again afterwards.
-- If the controller does nothing, look at `sanctuary-pad.log` in the game folder:
-  - No log file: the proxy is not being loaded. Set the game's launch options to
-    `WINEDLLOVERRIDES="SDL=n,b" %command%`.
-  - A log file without `controller 0 connected`: the layout is not a gamepad one (step 4).
-
-## Update
-
-After changing the code, close the game and run `.\install.ps1` again. Your
-`sanctuary-pad.ini` in the game folder is kept.
-
-## Uninstall
-
-```powershell
-.\install.ps1 -Uninstall
-```
-
-This restores the original `SDL.dll`. You can delete `sanctuary-pad.ini` and
-`sanctuary-pad.log` from the game folder afterwards.
-
-Verifying the game files in Steam also removes the proxy, because Steam replaces
-`SDL.dll` with the original. Run `.\install.ps1` again afterwards.
+If something does not work, see [Troubleshooting](#troubleshooting) and
+[Advanced installation](#advanced-installation).
 
 ## Controls
 
@@ -168,6 +82,68 @@ dump_screen = false      # debug logging, see Troubleshooting
   `dump_screen = true`, reproduce the problem and look at `sanctuary-pad-screen.txt` in
   the game folder. It records the screen text, the choices that were detected and every
   key that was sent.
+
+## Advanced installation
+
+### What the install scripts do
+
+Both scripts make the same three changes in the game folder:
+
+| File                | What happens                                                |
+| ------------------- | ----------------------------------------------------------- |
+| `SDL_orig.dll`      | The game's original `SDL.dll`, renamed (first install only) |
+| `SDL.dll`           | Replaced with the proxy from this project                   |
+| `sanctuary-pad.ini` | Default bindings, copied only if the file is not there yet  |
+
+`install.ps1` builds the DLL first and also copies it to `dist/sanctuary_pad.dll`.
+`install.sh` does not build; it installs that prebuilt copy from `dist/`.
+
+Verifying the game files in Steam, or a game update, puts the original `SDL.dll` back.
+Run the install script again afterwards.
+
+### Game in a different folder
+
+Both scripts search your Steam libraries, including ones on other drives or an SD card.
+If the game is not found, or you want a different copy, point them at the folder:
+
+```powershell
+.\install.ps1 -GameDir "D:\Steam\steamapps\common\SanctuaryRPG - Black Edition"
+```
+
+```bash
+bash install.sh --game-dir "/path/to/steamapps/common/SanctuaryRPG - Black Edition"
+```
+
+### PowerShell refuses to run the script
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\install.ps1
+```
+
+### Manual install
+
+1. `cargo build --release` on Windows, or take `dist/sanctuary_pad.dll`.
+2. In the game folder, rename `SDL.dll` to `SDL_orig.dll`.
+3. Copy `sanctuary_pad.dll` into the game folder as `SDL.dll`.
+4. Copy `sanctuary-pad.ini` into the game folder.
+
+### Linux / Steam Deck details
+
+- On the Deck, run the script in Desktop Mode (Konsole).
+- Steam tends to give games without controller support a keyboard-and-mouse layout. With
+  that the proxy never sees a controller, which is why the layout has to be changed to
+  the Gamepad template.
+- Typing text, such as a character name, needs the on-screen keyboard (Steam + X).
+- If `sanctuary-pad.log` does not appear in the game folder after starting the game, the
+  proxy is not being loaded. Set the game's launch options to
+  `WINEDLLOVERRIDES="SDL=n,b" %command%`.
+- The DLL cannot be built on Linux. To get a newer build, run `.\install.ps1` on Windows,
+  commit `dist/sanctuary_pad.dll`, then `git pull` and `bash install.sh` on Linux.
+
+### Uninstalling
+
+The uninstall option restores the original `SDL.dll`. You can delete `sanctuary-pad.ini`
+and `sanctuary-pad.log` from the game folder afterwards.
 
 ## Development
 
