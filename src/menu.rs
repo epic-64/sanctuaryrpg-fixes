@@ -312,6 +312,9 @@ fn token_keys(token: &str, label: &str, square: bool, standalone: bool) -> Optio
     let all = |test: fn(&char) -> bool| token.chars().all(|c| test(&c));
     if token.len() == 1 && all(char::is_ascii_alphanumeric) {
         Some(vec![parse_key(&token)?])
+    } else if token == "?" {
+        // `[?] Help` is a choice, but combat draws a bare `[?]` next to unknown enemies.
+        described.then(|| parse_key(&token)).flatten().map(|key| vec![key])
     } else if (2..=3).contains(&token.len()) && all(char::is_ascii_digit) {
         // Bracketed numbers are also used for read-outs such as a volume level, so only
         // accept the ones that are followed by a description, or that repeat one digit
@@ -519,6 +522,20 @@ mod tests {
             "> Murv has been OBLITERATED!",
         ]);
         assert!(!menu.is_active());
+    }
+
+    #[test]
+    fn parses_help_option() {
+        let rows = [
+            "                 [E] Equip    [S] Salvage",
+            "                                                 [?] Help",
+            ">",
+        ];
+        assert_eq!(
+            summary(&rows),
+            vec![option("e", 17, "Equip"), option("s", 30, "Salvage"), option("?", 49, "Help")]
+        );
+        assert!(reachable(&rows).contains("?"));
     }
 
     #[test]
