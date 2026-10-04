@@ -32,50 +32,16 @@ To remove it again, run `.\install.ps1 -Uninstall` or `bash install.sh --uninsta
 If something does not work, see [Troubleshooting](#troubleshooting) and
 [Advanced installation](#advanced-installation).
 
-> [!WARNING]
-> **Stray input at the `>` prompt**
->
-> Outside of menu choices, buttons type keys. X, Y, the bumpers and the triggers type
-> `1` to `6`, and those characters can end up in the `>` input row at the bottom of the
-> screen by accident.
->
-> - **B erases** the last character in the row. This is the safe way to clean it up.
-> - **START clears the whole row** by sending Enter: the game rejects the stray text and
->   empties the row. If the text happens to be a valid choice (for example a lone `1`),
->   Enter picks that choice instead, so check what the row says first.
-> - Picking a highlighted choice with A erases the row first, then types the choice.
-
 ## Controls
 
-On screens that list choices such as `[1] Play`, `[22] Load Holon`, `<S> Save Game` or `>2< EX Whirlwind`:
+| Controller         | Keyboard      | Action                               |
+| ------------------ | ------------- | ------------------------------------ |
+| D-pad / left stick | Arrow keys    | Move the highlight between choices   |
+| A                  | Space / Enter | Pick the highlighted choice, continue |
+| B                  | Escape        | Go back, or erase a character        |
 
-| Controller            | Keyboard   | Action                                                         |
-| --------------------- | ---------- | -------------------------------------------------------------- |
-| D-pad / left stick    | Arrow keys | Up/down moves between rows, left/right within a row (both wrap) |
-| A                     | Space / Enter | Pick the highlighted choice                                    |
-| B                     | Escape     | Pick Back / Return / Cancel / Leave / Close / No, if offered; otherwise Backspace |
-
-The keyboard works the same way in the game's window and in [terminal mode](#terminal-mode).
-On screens without choices the arrow keys are passed to the game unchanged. Space and
-Escape act as the A and B buttons everywhere (so Space advances cutscenes like Enter),
-except that Space types a space when text has already been typed at the `>` prompt.
-Enter picks the highlighted choice too, unless a choice has been typed at the prompt by
-hand: then it confirms that one, as it always did.
-
-On every other screen, and for all other buttons, the bindings from
-`sanctuary-pad.ini` apply. The defaults are:
-
-| Button     | Key        |
-| ---------- | ---------- |
-| D-pad / left stick | Arrow keys |
-| A, Start   | Enter      |
-| B, Back    | Backspace  |
-| X, Y       | 1, 2       |
-| LB, RB     | 3, 4       |
-| LT, RT     | 5, 6       |
-
-The controller is ignored while the game window is not focused. Typing text, such as a
-character name, still needs the keyboard.
+That is all the game needs. Typing text, such as a character name, needs the keyboard.
+For the other buttons and the fine print, see [Advanced controls](#advanced-controls).
 
 ## Terminal mode
 
@@ -123,6 +89,50 @@ dump_screen = false      # debug logging, see Troubleshooting
   `dump_screen = true`, reproduce the problem and look at `sanctuary-pad-screen.txt` in
   the game folder. It records the screen text, the choices that were detected and every
   key that was sent.
+
+## Advanced controls
+
+### Menu navigation
+
+The highlight appears on screens that list choices such as `[1] Play`, `[22] Load Holon`,
+`<S> Save Game` or `>2< EX Whirlwind`.
+
+- Up/down moves between rows, left/right within a row; both wrap around.
+- B / Escape picks Back / Return / Cancel / Leave / Close / No, if the screen offers one.
+  Otherwise it sends Backspace.
+- On screens without choices the arrow keys are passed to the game unchanged, and
+  A / Space sends Enter.
+- Space types a space when text has already been typed at the `>` prompt.
+- Enter confirms a choice typed at the prompt by hand instead of the highlighted one.
+- The keyboard works the same way in the game's window and in
+  [terminal mode](#terminal-mode).
+- The controller is ignored while the game window is not focused.
+
+### Other buttons
+
+On screens without choices, and for all other buttons, the bindings from
+`sanctuary-pad.ini` apply (see [Configuration](#configuration)). The defaults are:
+
+| Button     | Key        |
+| ---------- | ---------- |
+| D-pad / left stick | Arrow keys |
+| A, Start   | Enter      |
+| B, Back    | Backspace  |
+| X, Y       | 1, 2       |
+| LB, RB     | 3, 4       |
+| LT, RT     | 5, 6       |
+
+> [!WARNING]
+> **Stray input at the `>` prompt**
+>
+> X, Y, the bumpers and the triggers type `1` to `6`, and those characters can end up in
+> the `>` input row at the bottom of the screen by accident.
+>
+> - **B erases** the last character in the row. This is the safe way to clean it up.
+> - **START clears the whole row** by sending Enter: the game rejects the stray text and
+>   empties the row. If the text happens to be a valid choice (for example a lone `1`),
+>   Enter picks that choice instead, so check what the row says first.
+> - Picking a highlighted choice with A erases the row first, then types the choice.
 
 ## Advanced installation
 
