@@ -30,6 +30,19 @@ To remove it again, run `.\install.ps1 -Uninstall` or `bash install.sh --uninsta
 If something does not work, see [Troubleshooting](#troubleshooting) and
 [Advanced installation](#advanced-installation).
 
+> [!WARNING]
+> **Stray input at the `>` prompt**
+>
+> Outside of menu choices, buttons type keys. X, Y, the bumpers and the triggers type
+> `1` to `6`, and those characters can end up in the `>` input row at the bottom of the
+> screen by accident.
+>
+> - **B erases** the last character in the row. This is the safe way to clean it up.
+> - **START clears the whole row** by sending Enter: the game rejects the stray text and
+>   empties the row. If the text happens to be a valid choice (for example a lone `1`),
+>   Enter picks that choice instead, so check what the row says first.
+> - Picking a highlighted choice with A erases the row first, then types the choice.
+
 ## Controls
 
 On screens that list choices such as `[1] Play`, `[22] Load Holon`, `<S> Save Game` or `>2< EX Whirlwind`:
@@ -38,7 +51,7 @@ On screens that list choices such as `[1] Play`, `[22] Load Holon`, `<S> Save Ga
 | --------------------- | -------------------------------------------------------------- |
 | D-pad / left stick    | Up/down moves between rows, left/right within a row (both wrap) |
 | A                     | Pick the highlighted choice                                    |
-| B                     | Pick Back / Return / Cancel / Leave / Close / No, if offered   |
+| B                     | Pick Back / Return / Cancel / Leave / Close / No, if offered; otherwise Backspace |
 
 On every other screen, and for all other buttons, the bindings from
 `sanctuary-pad.ini` apply. The defaults are:
@@ -47,7 +60,7 @@ On every other screen, and for all other buttons, the bindings from
 | ---------- | ---------- |
 | D-pad / left stick | Arrow keys |
 | A, Start   | Enter      |
-| B, Back    | Escape     |
+| B, Back    | Backspace  |
 | X, Y       | 1, 2       |
 | LB, RB     | 3, 4       |
 | LT, RT     | 5, 6       |

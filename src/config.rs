@@ -18,7 +18,8 @@ const DEFAULT_BINDINGS: &[(&str, &str)] = &[
     ("left", "left"),
     ("right", "right"),
     ("a", "enter"),
-    ("b", "escape"),
+    // The game has no use for Escape (it types a stray glyph), so B erases instead.
+    ("b", "backspace"),
     ("x", "1"),
     ("y", "2"),
     ("lb", "3"),
@@ -26,7 +27,7 @@ const DEFAULT_BINDINGS: &[(&str, &str)] = &[
     ("lt", "5"),
     ("rt", "6"),
     ("start", "enter"),
-    ("back", "escape"),
+    ("back", "backspace"),
 ];
 
 pub struct Config {

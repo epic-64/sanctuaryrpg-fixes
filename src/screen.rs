@@ -44,7 +44,10 @@ fn tcod() -> Option<&'static Tcod> {
 // A null console pointer means the root console throughout libtcod's C API.
 const ROOT: *mut c_void = std::ptr::null_mut();
 
-/// Returns the root console as one string per row, with non-ASCII glyphs as spaces.
+/// Stands in for a glyph outside printable ASCII, so that it still counts as a character.
+pub const GLYPH: char = '\x7f';
+
+/// Returns the root console as one string per row, with non-ASCII glyphs as [`GLYPH`].
 /// Every cell is one byte, so byte offsets are column numbers.
 pub fn read() -> Vec<String> {
     let Some(tcod) = tcod() else { return Vec::new() };
@@ -55,7 +58,8 @@ pub fn read() -> Vec<String> {
                 (0..width)
                     .map(|x| match (tcod.get_char)(ROOT, x, y) {
                         c @ 32..=126 => c as u8 as char,
-                        _ => ' ',
+                        0 => ' ',
+                        _ => GLYPH,
                     })
                     .collect::<String>()
                     .trim_end()

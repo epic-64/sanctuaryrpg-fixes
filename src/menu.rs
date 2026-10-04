@@ -510,6 +510,8 @@ mod tests {
         let prompt = |rows: &[&str]| prompt_of(&rows.iter().map(|r| r.to_string()).collect::<Vec<_>>());
         assert_eq!(prompt(&[" [1] Play", ">", ""]), Some(String::new()));
         assert_eq!(prompt(&[" [1] Play", ">12"]), Some("12".to_string()));
+        // Escape shows up in the row as a glyph, which has to be erased like any character.
+        assert_eq!(prompt(&[" [1] Play", ">\x7f\x7f1"]).map(|typed| typed.len()), Some(3));
         assert_eq!(prompt(&["> Arrat has HIT you for 110 damage.", " [Y] Yes   [N] No"]), None);
         assert_eq!(prompt(&[" [1] Play", "> Arrat has HIT you for 110 damage."]), None);
     }
