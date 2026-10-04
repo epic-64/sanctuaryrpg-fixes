@@ -1,11 +1,13 @@
-# sanctuary-pad
+# sanctuary-fixes
 
-Controller support for **SanctuaryRPG: Black Edition**, which has none of its own.
+Native controller support for **SanctuaryRPG: Black Edition**.
 
 It is a replacement `SDL.dll` that passes everything through to the game's real SDL and
 turns XInput controller input into the key presses the game expects. It also reads the
 text on screen, so menus can be navigated with a highlight instead of memorising keys,
-on the controller or with the arrow keys. And it can run the game inside a terminal
+on the controller or with the arrow keys.
+
+And it can run the game inside a terminal
 instead of its own window, see [Terminal mode](#terminal-mode).
 
 ## Install
