@@ -5,7 +5,7 @@ param([string]$Buttons = "a", [int]$Seconds = 15, [int]$Tail = 200, [string]$Scr
 if (-not $GameDir) { $GameDir = Find-GameDir }
 Get-Process SanctuaryRPG -ErrorAction SilentlyContinue | Stop-Process -Force
 Start-Sleep -Milliseconds 500
-powershell -NoProfile -ExecutionPolicy Bypass -File "$PSScriptRoot\install.ps1" -GameDir $GameDir | Select-Object -Last 1
+powershell -NoProfile -ExecutionPolicy Bypass -File "$PSScriptRoot\install.ps1" -Build -GameDir $GameDir | Select-Object -Last 1
 Remove-Item "$GameDir\sanctuary-pad-screen.txt" -ErrorAction SilentlyContinue
 $env:SANCTUARY_PAD_SIMULATE = $Buttons
 $p = Start-Process "$GameDir\SanctuaryRPG.exe" -WorkingDirectory $GameDir -PassThru

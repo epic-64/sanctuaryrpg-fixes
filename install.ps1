@@ -1,8 +1,10 @@
-# Builds the proxy and installs it into the game directory.
+# Installs the prebuilt proxy (dist/sanctuary_pad.dll) into the game directory.
 # The original SDL.dll is kept as SDL_orig.dll; run with -Uninstall to put it back.
+# With -Build, the proxy is first rebuilt from source, which needs Rust.
 param(
     # Defaults to wherever Steam has the game installed.
     [string]$GameDir,
+    [switch]$Build,
     [switch]$Uninstall
 )
 $ErrorActionPreference = "Stop"
@@ -29,13 +31,22 @@ if ($Uninstall) {
     return
 }
 
-cargo build --release
-if ($LASTEXITCODE -ne 0) { throw "build failed" }
-
-# Keep the prebuilt copy that install.sh uses on Linux up to date.
-$dll = Join-Path $PSScriptRoot "target\i686-pc-windows-msvc\release\sanctuary_pad.dll"
-New-Item -ItemType Directory -Force (Join-Path $PSScriptRoot "dist") | Out-Null
-Copy-Item $dll (Join-Path $PSScriptRoot "dist\sanctuary_pad.dll") -Force
+$dll = Join-Path $PSScriptRoot "dist/sanctuary_pad.dll"
+if ($Build) {
+    Push-Location $PSScriptRoot
+    try {
+        cargo build --release
+        if ($LASTEXITCODE -ne 0) { throw "build failed" }
+    } finally {
+        Pop-Location
+    }
+    # dist/ is the copy that gets committed and that both install scripts use.
+    New-Item -ItemType Directory -Force (Split-Path $dll) | Out-Null
+    Copy-Item (Join-Path $PSScriptRoot "target/i686-pc-windows-msvc/release/sanctuary_pad.dll") $dll -Force
+}
+if (-not (Test-Path $dll)) {
+    throw "dist/sanctuary_pad.dll is missing. Run with -Build to build it (needs Rust)."
+}
 
 # Only the very first install sees the real SDL.dll under its own name.
 if (-not (Test-Path $orig)) {

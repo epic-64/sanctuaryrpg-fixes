@@ -11,13 +11,13 @@ text on screen, so menus can be navigated with a highlight instead of memorising
 Clone this repository and close the game. You need an XInput controller (Xbox-style, or
 anything that emulates one).
 
-**Windows** (needs [Rust](https://rustup.rs) and `rustup target add i686-pc-windows-msvc`):
+**Windows**:
 
 ```powershell
 .\install.ps1
 ```
 
-**Linux / Steam Deck** (nothing to build; not yet tested on a Deck):
+**Linux / Steam Deck** (not yet tested on a Deck):
 
 ```bash
 bash install.sh
@@ -95,8 +95,8 @@ Both scripts make the same three changes in the game folder:
 | `SDL.dll`           | Replaced with the proxy from this project                   |
 | `sanctuary-pad.ini` | Default bindings, copied only if the file is not there yet  |
 
-`install.ps1` builds the DLL first and also copies it to `dist/sanctuary_pad.dll`.
-`install.sh` does not build; it installs that prebuilt copy from `dist/`.
+Neither script builds anything: they install the prebuilt `dist/sanctuary_pad.dll` that
+is checked into the repository. To build it yourself, see [Development](#development).
 
 Verifying the game files in Steam, or a game update, puts the original `SDL.dll` back.
 Run the install script again afterwards.
@@ -122,10 +122,9 @@ powershell -ExecutionPolicy Bypass -File .\install.ps1
 
 ### Manual install
 
-1. `cargo build --release` on Windows, or take `dist/sanctuary_pad.dll`.
-2. In the game folder, rename `SDL.dll` to `SDL_orig.dll`.
-3. Copy `sanctuary_pad.dll` into the game folder as `SDL.dll`.
-4. Copy `sanctuary-pad.ini` into the game folder.
+1. In the game folder, rename `SDL.dll` to `SDL_orig.dll`.
+2. Copy `dist/sanctuary_pad.dll` into the game folder as `SDL.dll`.
+3. Copy `sanctuary-pad.ini` into the game folder.
 
 ### Linux / Steam Deck details
 
@@ -137,8 +136,7 @@ powershell -ExecutionPolicy Bypass -File .\install.ps1
 - If `sanctuary-pad.log` does not appear in the game folder after starting the game, the
   proxy is not being loaded. Set the game's launch options to
   `WINEDLLOVERRIDES="SDL=n,b" %command%`.
-- The DLL cannot be built on Linux. To get a newer build, run `.\install.ps1` on Windows,
-  commit `dist/sanctuary_pad.dll`, then `git pull` and `bash install.sh` on Linux.
+- To update, `git pull` and run `bash install.sh` again.
 
 ### Uninstalling
 
@@ -147,11 +145,19 @@ and `sanctuary-pad.log` from the game folder afterwards.
 
 ## Development
 
+Building needs Windows and [Rust](https://rustup.rs) with the MSVC toolchain and the
+32-bit target (the game is a 32-bit executable):
+
 ```powershell
-cargo test    # menu parsing and navigation tests
+rustup target add i686-pc-windows-msvc
+cargo test               # menu parsing and navigation tests
+.\install.ps1 -Build     # build, refresh dist/sanctuary_pad.dll and install
 ```
 
-`probe.ps1` installs the current build, runs the game with scripted button presses (no
+Commit `dist/sanctuary_pad.dll` together with the code change, so that installs without
+Rust, and on Linux where the DLL cannot be built, get the new version.
+
+`probe.ps1` builds and installs the current code, runs the game with scripted button presses (no
 controller needed) and prints what happened. It needs `dump_screen = true` in the game
 folder's ini, and it kills any running copy of the game first.
 
