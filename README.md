@@ -232,3 +232,7 @@ Source layout:
 | `src/terminal.rs` | Terminal mode: draws the console with ratatui and reads its keys |
 | `src/hook.rs`   | Import-table patch used to draw the highlight before each frame   |
 | `src/config.rs` | `sanctuary-pad.ini` parsing                                       |
+
+## License
+
+[MIT](LICENSE). This is an unofficial mod, not affiliated with the makers of SanctuaryRPG.
