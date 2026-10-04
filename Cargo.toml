@@ -1,0 +1,12 @@
+[package]
+name = "sanctuary-pad"
+version = "0.1.0"
+edition = "2021"
+description = "SDL 1.2 proxy DLL that adds XInput controller support to SanctuaryRPG: Black Edition"
+
+[lib]
+crate-type = ["cdylib"]
+
+[profile.release]
+opt-level = "s"
+panic = "abort"

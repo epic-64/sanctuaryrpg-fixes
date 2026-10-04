@@ -1,0 +1,8 @@
+[build]
+# The game is a 32-bit executable, so the proxy has to be too.
+target = "i686-pc-windows-msvc"
+
+[target.i686-pc-windows-msvc]
+# Link the C runtime statically so the DLL does not need the Visual C++ redistributable
+# (which a fresh Windows install or a Proton prefix may not have).
+rustflags = ["-C", "target-feature=+crt-static"]
