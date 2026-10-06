@@ -56,8 +56,13 @@ impl Menu {
         &self.options
     }
 
+    pub fn selected(&self) -> Option<&MenuOption> {
+        self.options.get(self.selected)
+    }
+
+    #[cfg(test)]
     pub fn selected_keys(&self) -> Option<Vec<Key>> {
-        self.options.get(self.selected).map(|option| option.keys.clone())
+        self.selected().map(|option| option.keys.clone())
     }
 
     /// Text already typed at the `>` prompt. `None` means the screen has no prompt and
@@ -66,14 +71,16 @@ impl Menu {
         self.prompt.as_deref()
     }
 
-    /// The keys of an option that backs out of the current screen, if there is one.
-    pub fn back_keys(&self) -> Option<Vec<Key>> {
+    /// An option that backs out of the current screen, if there is one.
+    pub fn back(&self) -> Option<&MenuOption> {
         BACK_LABELS.iter().find_map(|wanted| {
-            self.options
-                .iter()
-                .find(|option| option.label.to_ascii_lowercase().starts_with(wanted))
-                .map(|option| option.keys.clone())
+            self.options.iter().find(|option| option.label.to_ascii_lowercase().starts_with(wanted))
         })
+    }
+
+    #[cfg(test)]
+    pub fn back_keys(&self) -> Option<Vec<Key>> {
+        self.back().map(|option| option.keys.clone())
     }
 
     /// Re-reads the screen and makes sure the selection is highlighted.

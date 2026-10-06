@@ -18,7 +18,7 @@ mod screen;
 mod terminal;
 
 use config::{Config, Key};
-use menu::{Direction, Menu};
+use menu::{Direction, Menu, MenuOption};
 use pad::Pad;
 use terminal::Terminal;
 use std::collections::VecDeque;
@@ -61,7 +61,9 @@ const PAD_POLL_INTERVAL: Duration = Duration::from_millis(4);
 const WAIT_SLEEP: Duration = Duration::from_millis(5);
 const WAIT_MODE_WINDOW: Duration = Duration::from_secs(1);
 const EVENT_LIFETIME: Duration = Duration::from_secs(2);
-const CONFIRM_TIMEOUT: Duration = Duration::from_secs(1);
+/// The game may sit in a pause (animated text, a sound) before it reads a typed choice,
+/// so the echo can take a while. This only caps a screen that never echoes at all.
+const CONFIRM_TIMEOUT: Duration = Duration::from_secs(15);
 const MENU_SYNC_INTERVAL: Duration = Duration::from_millis(50);
 const REPEAT_DELAY: Duration = Duration::from_millis(400);
 const REPEAT_INTERVAL: Duration = Duration::from_millis(90);
@@ -109,6 +111,9 @@ impl KeyEvent {
 struct Confirm {
     /// What the prompt shows once the game has taken the typed choice.
     expected: String,
+    /// The option that was picked. Once it is gone from the screen, the key acted by
+    /// itself and no Enter must follow it.
+    chosen: MenuOption,
     deadline: Instant,
 }
 
@@ -195,7 +200,7 @@ struct State {
     /// The last time the game sat in `SDL_WaitEvent`.
     last_wait: Option<Instant>,
     dumper: screen::Dumper,
-    dumped_options: Vec<menu::MenuOption>,
+    dumped_options: Vec<MenuOption>,
 }
 
 static STATE: Mutex<Option<State>> = Mutex::new(None);
@@ -365,13 +370,13 @@ impl State {
                 return self.menu.navigate(direction);
             }
             let choice = match button {
-                pad::A => self.menu.selected_keys(),
-                pad::B => self.menu.back_keys(),
+                pad::A => self.menu.selected(),
+                pad::B => self.menu.back(),
                 _ => None,
             };
-            if let Some(keys) = choice {
-                self.debug(&format!("[pad] {name}: menu choice {}", key_names(&keys)));
-                self.choose(&keys);
+            if let Some(option) = choice.cloned() {
+                self.debug(&format!("[pad] {name}: menu choice {}", key_names(&option.keys)));
+                self.choose(option);
                 return false;
             }
         }
@@ -383,8 +388,9 @@ impl State {
     }
 
     /// Enters a menu choice the way the current screen expects it.
-    fn choose(&mut self, keys: &[Key]) {
+    fn choose(&mut self, option: MenuOption) {
         let now = Instant::now();
+        let keys = &option.keys;
         let mut tap = |key: Key| self.queue.push_back((now, KeyEvent::new(key)));
         // Screens with a prompt usually read a whole line: clear anything already
         // typed, then type the choice.
@@ -397,8 +403,12 @@ impl State {
         // Some screens act on the key itself, and an Enter sent blindly would then land
         // on whatever screen comes next. So it is only sent once the choice shows up at
         // the prompt, which means the game is waiting for the line to be finished.
+        // The screen may still be in the middle of being drawn (event screens even change
+        // the wording of their choices while they appear), so only the chosen option is
+        // watched, not the whole menu.
         self.confirm = self.menu.prompt().is_some().then(|| Confirm {
-            expected: keys.iter().map(|key| key.unicode as u8 as char).collect(),
+            expected: option.keys.iter().map(|key| key.unicode as u8 as char).collect(),
+            chosen: option.clone(),
             deadline: now + CONFIRM_TIMEOUT,
         });
     }
@@ -408,11 +418,18 @@ impl State {
     fn confirm_choice(&mut self, now: Instant) -> bool {
         let Some(confirm) = &self.confirm else { return false };
         let redraw = self.menu.sync();
-        if self.menu.prompt().is_some_and(|typed| typed.eq_ignore_ascii_case(&confirm.expected)) {
+        let expected = confirm.expected.to_ascii_lowercase();
+        let typed = self.menu.prompt().map(|typed| typed.to_ascii_lowercase());
+        if typed.as_deref() == Some(expected.as_str()) {
             self.debug("[pad] choice echoed, sending enter");
             self.queue.push_back((now, KeyEvent::new(ENTER)));
             self.confirm = None;
-        } else if now > confirm.deadline {
+        } else if now > confirm.deadline
+            || !self.menu.options().contains(&confirm.chosen)
+            // The prompt is gone, or shows something other than the choice on its way in.
+            || !typed.is_some_and(|typed| expected.starts_with(&typed))
+        {
+            self.debug("[pad] choice not echoed, giving up on the enter");
             self.confirm = None;
         }
         redraw
