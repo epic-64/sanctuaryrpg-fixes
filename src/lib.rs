@@ -171,8 +171,8 @@ fn original() -> &'static Original {
     })
 }
 
-/// `sanctuary-terminal.cmd` sets this to have the game drawn in the console it was
-/// started from, instead of in a window.
+/// `sanctuary-terminal.cmd` / `.sh` set this to have the game drawn in the console it was
+/// started from, instead of in a window. See `Terminal::open` for the value.
 fn terminal_requested() -> bool {
     std::env::var_os("SANCTUARY_PAD_TERMINAL").is_some()
 }
@@ -233,8 +233,8 @@ impl State {
                 None => log("could not hook TCODConsole::flush; the menu highlight may flicker"),
             }
         }
-        let terminal = terminal_requested().then(Terminal::open).and_then(|opened| {
-            opened.map_err(|error| log(&format!("could not open the terminal: {error}"))).ok()
+        let terminal = std::env::var("SANCTUARY_PAD_TERMINAL").ok().and_then(|how| {
+            Terminal::open(&how).map_err(|error| log(&format!("could not open the terminal: {error}"))).ok()
         });
         let now = Instant::now();
         State {

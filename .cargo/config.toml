@@ -6,3 +6,12 @@ target = "i686-pc-windows-msvc"
 # Link the C runtime statically so the DLL does not need the Visual C++ redistributable
 # (which a fresh Windows install or a Proton prefix may not have).
 rustflags = ["-C", "target-feature=+crt-static"]
+
+[target.i686-pc-windows-gnu]
+# Cross-building on Linux (see README, Development). Also static, for the same reason.
+linker = "i686-w64-mingw32-gcc"
+# Stripped, since this build is also what gets committed to dist/; the stdcall fixup only
+# silences ld's note about DllMain.
+rustflags = ["-C", "target-feature=+crt-static", "-C", "strip=symbols", "-C", "link-arg=-Wl,--enable-stdcall-fixup"]
+# `cargo test --target i686-pc-windows-gnu` runs the test binary through Wine.
+runner = "wine"

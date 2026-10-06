@@ -37,8 +37,13 @@ fn main() {
     );
     fs::write(out_dir.join("forwards.rs"), forwards).unwrap();
 
-    // This comes after rustc's own /DEF on the linker command line and replaces it.
     let def_path = out_dir.join("sdl.def");
     fs::write(&def_path, def).unwrap();
-    println!("cargo:rustc-cdylib-link-arg=/DEF:{}", def_path.display());
+    if env::var("CARGO_CFG_TARGET_ENV").unwrap() == "msvc" {
+        // This comes after rustc's own /DEF on the linker command line and replaces it.
+        println!("cargo:rustc-cdylib-link-arg=/DEF:{}", def_path.display());
+    } else {
+        // GNU ld takes the .def file as an input and merges it with rustc's exports.
+        println!("cargo:rustc-cdylib-link-arg={}", def_path.display());
+    }
 }

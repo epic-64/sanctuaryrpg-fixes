@@ -47,11 +47,20 @@ For the other buttons and the fine print, see [Advanced controls](#advanced-cont
 
 ## Terminal mode
 
-The game can also be played inside a terminal, such as Windows Terminal. Run
-`sanctuary-terminal.cmd` from the game folder in the console you want it in:
+The game can also be played inside a terminal, such as Windows Terminal, GNOME Terminal
+or Konsole. Run the launcher from the game folder in the console you want it in.
+
+**Windows**:
 
 ```powershell
 & "C:\Program Files (x86)\Steam\steamapps\common\SanctuaryRPG - Black Edition\sanctuary-terminal.cmd"
+```
+
+**Linux / Steam Deck** (start the game once from Steam first, so that its Proton prefix
+exists):
+
+```bash
+~/.local/share/Steam/steamapps/common/"SanctuaryRPG - Black Edition"/sanctuary-terminal.sh
 ```
 
 The game then opens no window of its own. Its screen is drawn into the console with
@@ -62,7 +71,12 @@ uses its normal window.
 
 The console has to be at least as large as the game's screen; if it is not, a message
 says how large it has to be. Where the game's background is black, the terminal's own
-background shows instead. This is Windows only for now.
+background shows instead.
+
+On Linux the launcher runs the game with the Proton that Steam uses for it, outside of
+Steam, and the game draws straight into the terminal it was started from. Wine's messages
+go to `sanctuary-terminal.log` in the game folder. If the wrong Proton is picked, pass the
+right one with `--proton "/path/to/Proton - Experimental"`.
 
 ## Configuration
 
@@ -147,7 +161,7 @@ Both scripts make these changes in the game folder:
 | `SDL_orig.dll`      | The game's original `SDL.dll`, renamed (first install only) |
 | `SDL.dll`           | Replaced with the proxy from this project                   |
 | `sanctuary-pad.ini` | Default bindings, copied only if the file is not there yet  |
-| `sanctuary-terminal.cmd` | Launcher for [terminal mode](#terminal-mode) (`install.ps1` only) |
+| `sanctuary-terminal.cmd` / `.sh` | Launcher for [terminal mode](#terminal-mode) (Windows / Linux) |
 
 Neither script builds anything: they install the prebuilt `dist/sanctuary_pad.dll` that
 is checked into the repository. To build it yourself, see [Development](#development).
@@ -179,7 +193,8 @@ powershell -ExecutionPolicy Bypass -File .\install.ps1
 1. In the game folder, rename `SDL.dll` to `SDL_orig.dll`.
 2. Copy `dist/sanctuary_pad.dll` into the game folder as `SDL.dll`.
 3. Copy `sanctuary-pad.ini` into the game folder.
-4. For [terminal mode](#terminal-mode), copy `sanctuary-terminal.cmd` into the game folder.
+4. For [terminal mode](#terminal-mode), copy `sanctuary-terminal.cmd` (Windows) or
+   `sanctuary-terminal.sh` (Linux) into the game folder.
 
 ### Linux / Steam Deck details
 
@@ -192,6 +207,8 @@ powershell -ExecutionPolicy Bypass -File .\install.ps1
   proxy is not being loaded. Set the game's launch options to
   `WINEDLLOVERRIDES="SDL=n,b" %command%`.
 - To update, `git pull` and run `bash install.sh` again.
+- [Terminal mode](#terminal-mode) needs a terminal, so it is for Desktop Mode on the
+  Deck. The game has to have been started from Steam once before.
 
 ### Uninstalling
 
@@ -200,17 +217,27 @@ and `sanctuary-pad.log` from the game folder afterwards.
 
 ## Development
 
-Building needs Windows and [Rust](https://rustup.rs) with the MSVC toolchain and the
-32-bit target (the game is a 32-bit executable):
+Building needs [Rust](https://rustup.rs) and a 32-bit Windows target (the game is a 32-bit
+executable). On Windows, with the MSVC toolchain:
 
 ```powershell
 rustup target add i686-pc-windows-msvc
-cargo test               # menu parsing and navigation tests
+cargo test               # menu parsing, navigation and terminal key tests
 .\install.ps1 -Build     # build, refresh dist/sanctuary_pad.dll and install
 ```
 
+On Linux, cross-compiled with mingw-w64 (`apt install gcc-mingw-w64-i686` on Debian and
+Ubuntu). The tests are Windows binaries too, so they run through Wine; `wine` has to be
+on the `PATH`, for example Proton's `files/bin`:
+
+```bash
+rustup target add i686-pc-windows-gnu
+cargo test --target i686-pc-windows-gnu
+bash install.sh --build  # build, refresh dist/sanctuary_pad.dll and install
+```
+
 Commit `dist/sanctuary_pad.dll` together with the code change, so that installs without
-Rust, and on Linux where the DLL cannot be built, get the new version.
+Rust get the new version. Either toolchain's DLL works in the game.
 
 `probe.ps1` builds and installs the current code, runs the game with scripted button presses (no
 controller needed) and prints what happened. It needs `dump_screen = true` in the game
@@ -231,7 +258,7 @@ Source layout:
 | `src/pad.rs`    | XInput polling                                                    |
 | `src/menu.rs`   | Finding on-screen choices, selection and highlight                |
 | `src/screen.rs` | Reading and colouring the game's console through libtcod          |
-| `src/terminal.rs` | Terminal mode: draws the console with ratatui and reads its keys |
+| `src/terminal.rs` | Terminal mode: draws the console with ratatui (Windows console, or stdout under Wine) and reads its keys |
 | `src/hook.rs`   | Import-table patch used to draw the highlight before each frame   |
 | `src/config.rs` | `sanctuary-pad.ini` parsing                                       |
 

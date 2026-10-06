@@ -13,8 +13,19 @@ cargo test
 .\install.ps1 -Build     # release build, refresh dist/sanctuary_pad.dll, install into the game folder
 ```
 
+On Linux (mingw-w64 cross build; the tests run through Wine, so Proton's `files/bin` has
+to be on the `PATH` for them):
+
+```bash
+cargo test --target i686-pc-windows-gnu
+bash install.sh --build  # same as install.ps1 -Build
+```
+
 - The game must be closed, otherwise `SDL.dll` is locked and the copy fails. It only
   picks up the new DLL on its next start.
+- Terminal mode on Linux (`sanctuary-terminal.sh`) can be tested without a controller or a
+  real terminal: fork it in a pseudo-terminal from Python, send keys on a timer and read
+  `sanctuary-pad-screen.txt`. The game accepts its first Enter about 12 seconds after launch.
 - `dist/sanctuary_pad.dll` is checked in and is what the install scripts use, so commit
   it together with the code change.
 
