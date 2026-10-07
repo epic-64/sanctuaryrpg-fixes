@@ -26,11 +26,17 @@ Rust get the new version. Either toolchain's DLL works in the game.
 
 ## Releasing
 
-1. Bump the version in `VERSION` and `Cargo.toml`, make sure `prebuilt/sanctuary_pad.dll`
-   is current, commit and push.
-2. Run `scripts/release.sh`. It tags the commit as `v<version>` and pushes the tag.
-3. GitHub Actions (`.github/workflows/release.yml`) then runs `scripts/distribute.sh` and
-   publishes `sanctuary-fixes-<version>.zip` as a GitHub release.
+Make sure `prebuilt/sanctuary_pad.dll` is current and everything is committed, then:
+
+```bash
+scripts/release.sh --bump patch     # or minor, major, or an explicit version like 1.2.3
+```
+
+It raises the version in `VERSION`, `Cargo.toml` and `Cargo.lock`, commits and pushes
+that, then tags the commit `v<version>` and pushes the tag. GitHub Actions
+(`.github/workflows/release.yml`) runs `scripts/distribute.sh` and publishes
+`sanctuary-fixes-<version>.zip` as a GitHub release. Without `--bump` the script only
+tags the current, already pushed version.
 
 To build the zip locally, run `scripts/distribute.sh`; it lands in the gitignored `dist/`.
 

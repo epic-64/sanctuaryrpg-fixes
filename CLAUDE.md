@@ -37,7 +37,7 @@ every key sent. `probe.ps1` runs the game with scripted button presses (see `doc
 
 ## Releasing
 
-`scripts/release.sh` tags `v<VERSION>` and pushes it; GitHub Actions then runs
-`scripts/distribute.sh` and uploads the zip as a release. `VERSION` must match the
-version in `Cargo.toml`. For a local zip only, run `scripts/distribute.sh` (output in the
-gitignored `dist/`).
+`scripts/release.sh --bump patch|minor|major` bumps `VERSION`, `Cargo.toml` and
+`Cargo.lock`, commits, pushes and tags `v<VERSION>`; GitHub Actions then runs
+`scripts/distribute.sh` and uploads the zip as a release. For a local zip only, run
+`scripts/distribute.sh` (output in the gitignored `dist/`).
