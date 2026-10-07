@@ -43,6 +43,8 @@ pub struct Menu {
     column: i32,
     /// What has been typed at the game's `>` prompt, if the screen has one.
     prompt: Option<String>,
+    /// See `echo`.
+    echo: Option<String>,
     /// Highlighted cells with the background colour they had before.
     painted: Vec<(i32, i32, u32)>,
 }
@@ -71,6 +73,14 @@ impl Menu {
         self.prompt.as_deref()
     }
 
+    /// What the bottom row shows, which is where a typed choice is echoed: the text at
+    /// the `>` prompt, or the bare row on screens that read a line without a prompt
+    /// (conversations echo the choice under the menu). A row of several words is not an
+    /// echo.
+    pub fn echo(&self) -> Option<&str> {
+        self.echo.as_deref()
+    }
+
     /// An option that backs out of the current screen, if there is one.
     pub fn back(&self) -> Option<&MenuOption> {
         BACK_LABELS.iter().find_map(|wanted| {
@@ -93,6 +103,7 @@ impl Menu {
     fn update(&mut self, rows: &[String]) {
         let options = parse(rows);
         self.prompt = prompt_of(rows);
+        self.echo = echo_of(rows);
         if options != self.options {
             // Keep the cursor where it was if the same choice is still on offer: either
             // within a menu that changed, or in one that comes back unchanged.
@@ -203,6 +214,17 @@ fn prompt_of(rows: &[String]) -> Option<String> {
     let bottom = rows.iter().rev().find(|row| !row.trim().is_empty())?;
     let typed = bottom.strip_prefix('>')?;
     (!typed.contains(' ')).then(|| typed.to_string())
+}
+
+/// Where a typed choice shows up: the `>` prompt, or else the bottom row itself if it
+/// holds a single word.
+fn echo_of(rows: &[String]) -> Option<String> {
+    let bottom = rows.iter().rev().find(|row| !row.trim().is_empty())?;
+    if bottom.starts_with('>') {
+        return prompt_of(rows);
+    }
+    let word = bottom.trim();
+    (!word.contains(' ')).then(|| word.to_string())
 }
 
 /// Text of a label starting at `rest`: it runs until a wide gap or the next option.
@@ -554,6 +576,17 @@ mod tests {
         assert_eq!(prompt(&[" [1] Play", ">\x7f\x7f1"]).map(|typed| typed.len()), Some(3));
         assert_eq!(prompt(&["> Arrat has HIT you for 110 damage.", " [Y] Yes   [N] No"]), None);
         assert_eq!(prompt(&[" [1] Play", "> Arrat has HIT you for 110 damage."]), None);
+    }
+
+    #[test]
+    fn finds_echo_without_prompt() {
+        let echo = |rows: &[&str]| echo_of(&rows.iter().map(|r| r.to_string()).collect::<Vec<_>>());
+        // Conversations echo the choice on a bare row under the menu.
+        assert_eq!(echo(&[" [4] Spew nonsense.", "+----+", " 4", "", ""]), Some("4".to_string()));
+        assert_eq!(echo(&[" [4] Spew nonsense.", "+----+", "", ""]), Some("+----+".to_string()));
+        assert_eq!(echo(&[" [1] Play", ">12"]), Some("12".to_string()));
+        assert_eq!(echo(&[" [1] Play", "> Arrat has HIT you for 110 damage."]), None);
+        assert_eq!(echo(&[" [1] Play", " Press any key to continue."]), None);
     }
 
     #[test]

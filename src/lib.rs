@@ -401,12 +401,15 @@ impl State {
         }
         keys.iter().for_each(|&key| tap(key));
         // Some screens act on the key itself, and an Enter sent blindly would then land
-        // on whatever screen comes next. So it is only sent once the choice shows up at
-        // the prompt, which means the game is waiting for the line to be finished.
+        // on whatever screen comes next. So it is only sent once the choice is echoed on
+        // screen, which means the game is waiting for the line to be finished. Not every
+        // line-reading screen has a `>` prompt (conversations echo under the menu), so
+        // the echo is awaited on every screen; a key that acts by itself changes the
+        // screen instead, which calls the wait off.
         // The screen may still be in the middle of being drawn (event screens even change
         // the wording of their choices while they appear), so only the chosen option is
         // watched, not the whole menu.
-        self.confirm = self.menu.prompt().is_some().then(|| Confirm {
+        self.confirm = Some(Confirm {
             expected: option.keys.iter().map(|key| key.unicode as u8 as char).collect(),
             chosen: option.clone(),
             deadline: now + CONFIRM_TIMEOUT,
@@ -419,7 +422,7 @@ impl State {
         let Some(confirm) = &self.confirm else { return false };
         let redraw = self.menu.sync();
         let expected = confirm.expected.to_ascii_lowercase();
-        let typed = self.menu.prompt().map(|typed| typed.to_ascii_lowercase());
+        let typed = self.menu.echo().map(|typed| typed.to_ascii_lowercase());
         if typed.as_deref() == Some(expected.as_str()) {
             self.debug("[pad] choice echoed, sending enter");
             self.queue.push_back((now, KeyEvent::new(ENTER)));
@@ -427,7 +430,8 @@ impl State {
         } else if now > confirm.deadline
             || !self.menu.options().contains(&confirm.chosen)
             // The prompt is gone, or shows something other than the choice on its way in.
-            || !typed.is_some_and(|typed| expected.starts_with(&typed))
+            // Without a prompt the bottom row shows other things until the echo arrives.
+            || (self.menu.prompt().is_some() && !typed.is_some_and(|typed| expected.starts_with(&typed)))
         {
             self.debug("[pad] choice not echoed, giving up on the enter");
             self.confirm = None;
