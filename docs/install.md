@@ -12,7 +12,7 @@ Both scripts make these changes in the game folder:
 | `sanctuary-terminal.cmd` / `.sh` | Launcher for [terminal mode](terminal-mode.md) (Windows / Linux) |
 
 Neither script builds anything: they install the checked-in `prebuilt/sanctuary_pad.dll` that
-is checked into the repository. To build it yourself, see [Contributing](contributing.md).
+is checked into the repository. To build it yourself, see [Contributing](https://github.com/epic-64/sanctuaryrpg-fixes/blob/main/docs/contributing.md).
 
 Verifying the game files in Steam, or a game update, puts the original `SDL.dll` back.
 Run the install script again afterwards.
@@ -54,7 +54,7 @@ powershell -ExecutionPolicy Bypass -File .\install.ps1
 - If `sanctuary-pad.log` does not appear in the game folder after starting the game, the
   proxy is not being loaded. Set the game's launch options to
   `WINEDLLOVERRIDES="SDL=n,b" %command%`.
-- To update, `git pull` and run `bash install.sh` again.
+- To update, extract the new zip and run `bash install.sh` again.
 - [Terminal mode](terminal-mode.md) needs a terminal, so it is for Desktop Mode on the
   Deck. The game has to have been started from Steam once before.
 

@@ -34,3 +34,8 @@ bash install.sh --build  # same as install.ps1 -Build
 Set `dump_screen = true` in the game folder's `sanctuary-pad.ini`, reproduce, and read
 `sanctuary-pad-screen.txt` there: it records the screen text, the detected choices and
 every key sent. `probe.ps1` runs the game with scripted button presses (see `docs/contributing.md`).
+
+## Releasing
+
+`scripts/distribute.sh` zips the player-facing files into the gitignored `dist/`.
+`VERSION` must match the version in `Cargo.toml`.

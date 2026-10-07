@@ -5,7 +5,9 @@ as a drop-in `SDL.dll`. Optionally runs the game inside your terminal.
 
 ## Install
 
-Close the game, then run from a clone of this repository:
+Download the latest `sanctuary-fixes-<version>.zip` from
+[Releases](https://github.com/epic-64/sanctuaryrpg-fixes/releases), extract it, close
+the game and run from the extracted folder:
 
 ```powershell
 .\install.ps1            # Windows

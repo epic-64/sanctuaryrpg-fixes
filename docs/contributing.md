@@ -24,6 +24,12 @@ bash install.sh --build  # build, refresh prebuilt/sanctuary_pad.dll and install
 Commit `prebuilt/sanctuary_pad.dll` together with the code change, so that installs without
 Rust get the new version. Either toolchain's DLL works in the game.
 
+## Releasing
+
+Bump the version in `VERSION` and `Cargo.toml`, make sure `prebuilt/sanctuary_pad.dll` is
+current, then run `scripts/distribute.sh`. It writes `dist/sanctuary-fixes-<version>.zip`
+(gitignored) with only the files a player needs, for upload to a GitHub release.
+
 ## Probing the game
 
 `probe.ps1` builds and installs the current code, runs the game with scripted button
