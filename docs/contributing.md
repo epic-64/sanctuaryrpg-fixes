@@ -8,7 +8,7 @@ executable). On Windows, with the MSVC toolchain:
 ```powershell
 rustup target add i686-pc-windows-msvc
 cargo test               # menu parsing, navigation and terminal key tests
-.\install.ps1 -Build     # build, refresh dist/sanctuary_pad.dll and install
+.\install.ps1 -Build     # build, refresh prebuilt/sanctuary_pad.dll and install
 ```
 
 On Linux, cross-compiled with mingw-w64 (`apt install gcc-mingw-w64-i686` on Debian and
@@ -18,10 +18,10 @@ on the `PATH`, for example Proton's `files/bin`:
 ```bash
 rustup target add i686-pc-windows-gnu
 cargo test --target i686-pc-windows-gnu
-bash install.sh --build  # build, refresh dist/sanctuary_pad.dll and install
+bash install.sh --build  # build, refresh prebuilt/sanctuary_pad.dll and install
 ```
 
-Commit `dist/sanctuary_pad.dll` together with the code change, so that installs without
+Commit `prebuilt/sanctuary_pad.dll` together with the code change, so that installs without
 Rust get the new version. Either toolchain's DLL works in the game.
 
 ## Probing the game

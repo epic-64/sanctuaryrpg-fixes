@@ -1,4 +1,4 @@
-# Installs the prebuilt proxy (dist/sanctuary_pad.dll) into the game directory.
+# Installs the prebuilt proxy (prebuilt/sanctuary_pad.dll) into the game directory.
 # The original SDL.dll is kept as SDL_orig.dll; run with -Uninstall to put it back.
 # With -Build, the proxy is first rebuilt from source, which needs Rust.
 param(
@@ -32,7 +32,7 @@ if ($Uninstall) {
     return
 }
 
-$dll = Join-Path $PSScriptRoot "dist/sanctuary_pad.dll"
+$dll = Join-Path $PSScriptRoot "prebuilt/sanctuary_pad.dll"
 if ($Build) {
     Push-Location $PSScriptRoot
     try {
@@ -41,12 +41,12 @@ if ($Build) {
     } finally {
         Pop-Location
     }
-    # dist/ is the copy that gets committed and that both install scripts use.
+    # prebuilt/ is the copy that gets committed and that both install scripts use.
     New-Item -ItemType Directory -Force (Split-Path $dll) | Out-Null
     Copy-Item (Join-Path $PSScriptRoot "target/i686-pc-windows-msvc/release/sanctuary_pad.dll") $dll -Force
 }
 if (-not (Test-Path $dll)) {
-    throw "dist/sanctuary_pad.dll is missing. Run with -Build to build it (needs Rust)."
+    throw "prebuilt/sanctuary_pad.dll is missing. Run with -Build to build it (needs Rust)."
 }
 
 # Only the very first install sees the real SDL.dll under its own name.

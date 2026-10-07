@@ -11,7 +11,7 @@ Both scripts make these changes in the game folder:
 | `sanctuary-pad.ini` | Default bindings, copied only if the file is not there yet  |
 | `sanctuary-terminal.cmd` / `.sh` | Launcher for [terminal mode](terminal-mode.md) (Windows / Linux) |
 
-Neither script builds anything: they install the prebuilt `dist/sanctuary_pad.dll` that
+Neither script builds anything: they install the checked-in `prebuilt/sanctuary_pad.dll` that
 is checked into the repository. To build it yourself, see [Contributing](contributing.md).
 
 Verifying the game files in Steam, or a game update, puts the original `SDL.dll` back.
@@ -39,7 +39,7 @@ powershell -ExecutionPolicy Bypass -File .\install.ps1
 ## Manual install
 
 1. In the game folder, rename `SDL.dll` to `SDL_orig.dll`.
-2. Copy `dist/sanctuary_pad.dll` into the game folder as `SDL.dll`.
+2. Copy `prebuilt/sanctuary_pad.dll` into the game folder as `SDL.dll`.
 3. Copy `sanctuary-pad.ini` into the game folder.
 4. For [terminal mode](terminal-mode.md), copy `sanctuary-terminal.cmd` (Windows) or
    `sanctuary-terminal.sh` (Linux) into the game folder.

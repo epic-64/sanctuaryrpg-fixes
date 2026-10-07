@@ -10,7 +10,7 @@ game loads. After any code change, before telling the user to try it in the game
 
 ```powershell
 cargo test
-.\install.ps1 -Build     # release build, refresh dist/sanctuary_pad.dll, install into the game folder
+.\install.ps1 -Build     # release build, refresh prebuilt/sanctuary_pad.dll, install into the game folder
 ```
 
 On Linux (mingw-w64 cross build; the tests run through Wine, so Proton's `files/bin` has
@@ -26,7 +26,7 @@ bash install.sh --build  # same as install.ps1 -Build
 - Terminal mode on Linux (`sanctuary-terminal.sh`) can be tested without a controller or a
   real terminal: fork it in a pseudo-terminal from Python, send keys on a timer and read
   `sanctuary-pad-screen.txt`. The game accepts its first Enter about 12 seconds after launch.
-- `dist/sanctuary_pad.dll` is checked in and is what the install scripts use, so commit
+- `prebuilt/sanctuary_pad.dll` is checked in and is what the install scripts use, so commit
   it together with the code change.
 
 ## Debugging a screen

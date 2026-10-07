@@ -2,9 +2,9 @@
 # Installs the proxy into the game's folder on Linux / Steam Deck (the game runs
 # through Proton). The game's own SDL.dll is kept as SDL_orig.dll.
 #
-# By default this installs the prebuilt dist/sanctuary_pad.dll that is checked into the
+# By default this installs prebuilt/sanctuary_pad.dll that is checked into the
 # repository (install.ps1 refreshes it on Windows), or a sanctuary_pad.dll placed next to
-# this script. With --build, the proxy is first rebuilt from source and dist/ refreshed,
+# this script. With --build, the proxy is first rebuilt from source and prebuilt/ refreshed,
 # which needs Rust with the i686-pc-windows-gnu target and mingw-w64 (see docs/contributing.md).
 #
 # Usage: ./install.sh [--game-dir DIR] [--dll FILE] [--build] [--uninstall]
@@ -90,14 +90,14 @@ fi
 
 if $build; then
     (cd "$script_dir" && cargo build --release --target i686-pc-windows-gnu)
-    # dist/ is the copy that gets committed and that both install scripts use.
-    mkdir -p "$script_dir/dist"
-    cp -f "$script_dir/target/i686-pc-windows-gnu/release/sanctuary_pad.dll" "$script_dir/dist/sanctuary_pad.dll"
+    # prebuilt/ is the copy that gets committed and that both install scripts use.
+    mkdir -p "$script_dir/prebuilt"
+    cp -f "$script_dir/target/i686-pc-windows-gnu/release/sanctuary_pad.dll" "$script_dir/prebuilt/sanctuary_pad.dll"
 fi
 if [ -z "$dll" ]; then
     for candidate in \
         "$script_dir/sanctuary_pad.dll" \
-        "$script_dir/dist/sanctuary_pad.dll" \
+        "$script_dir/prebuilt/sanctuary_pad.dll" \
         "$script_dir/target/i686-pc-windows-msvc/release/sanctuary_pad.dll" \
         "$script_dir/target/i686-pc-windows-gnu/release/sanctuary_pad.dll"; do
         if [ -f "$candidate" ]; then
@@ -108,7 +108,7 @@ if [ -z "$dll" ]; then
 fi
 if [ -z "$dll" ] || [ ! -f "$dll" ]; then
     echo "Could not find sanctuary_pad.dll." >&2
-    echo "It should be in dist/ of the repository. Otherwise build it with --build (needs" >&2
+    echo "It should be in prebuilt/ of the repository. Otherwise build it with --build (needs" >&2
     echo "Rust and mingw-w64), copy a sanctuary_pad.dll next to this script, or pass its" >&2
     echo "location with --dll." >&2
     exit 1
