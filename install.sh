@@ -5,7 +5,7 @@
 # By default this installs the prebuilt dist/sanctuary_pad.dll that is checked into the
 # repository (install.ps1 refreshes it on Windows), or a sanctuary_pad.dll placed next to
 # this script. With --build, the proxy is first rebuilt from source and dist/ refreshed,
-# which needs Rust with the i686-pc-windows-gnu target and mingw-w64 (see README).
+# which needs Rust with the i686-pc-windows-gnu target and mingw-w64 (see docs/contributing.md).
 #
 # Usage: ./install.sh [--game-dir DIR] [--dll FILE] [--build] [--uninstall]
 set -euo pipefail

@@ -1,7 +1,7 @@
 # sanctuary-pad
 
 SDL proxy DLL that adds controller and keyboard menu navigation to SanctuaryRPG.
-See `README.md` (Development) for the source layout.
+See `docs/contributing.md` for the source layout.
 
 ## Getting a change into the game
 
@@ -33,4 +33,4 @@ bash install.sh --build  # same as install.ps1 -Build
 
 Set `dump_screen = true` in the game folder's `sanctuary-pad.ini`, reproduce, and read
 `sanctuary-pad-screen.txt` there: it records the screen text, the detected choices and
-every key sent. `probe.ps1` runs the game with scripted button presses (see README).
+every key sent. `probe.ps1` runs the game with scripted button presses (see `docs/contributing.md`).
